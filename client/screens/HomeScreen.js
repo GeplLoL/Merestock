@@ -44,7 +44,6 @@ export default function HomeScreen({ navigation }) {
 
   useFocusEffect(useCallback(load, []));
 
-  // Фильтрация и сортировка
   const filtered = useMemo(() => {
     const q   = searchQuery.trim().toLowerCase();
     const min = parseFloat(minPrice) || 0;
