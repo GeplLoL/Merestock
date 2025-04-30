@@ -73,3 +73,4 @@ const styles = StyleSheet.create({
   link:     { marginTop:12, alignItems:'center' },
   linkText: { color:'#0066CC' },
 });
+

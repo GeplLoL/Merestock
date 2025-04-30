@@ -1,5 +1,3 @@
-// src/screens/UsersScreen.js
-
 import React, { useEffect } from 'react';
 import { View, FlatList, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
@@ -31,7 +29,6 @@ export default function UsersScreen({ navigation }) {
             onPress={() =>
               navigation.navigate('Chat', {
                 otherUserId: item.id,
-                // при необходимости передайте productId
               })
             }
           >

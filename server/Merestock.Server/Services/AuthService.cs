@@ -1,4 +1,4 @@
-using System.Text;
+ï»¿using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
@@ -16,25 +16,31 @@ namespace Merestock.Server.Services
         private readonly IConfiguration _config;
         private readonly PasswordHasher<User> _hasher = new();
 
+        // SÃµltuvuste sÃ¼stimine: andmebaasi kontekst ja konfiguratsioon
         public AuthService(AppDbContext ctx, IConfiguration cfg)
         {
             _context = ctx;
             _config = cfg;
         }
 
+        // Uue kasutaja registreerimine
         public async Task<User> Register(RegisterDto dto)
         {
             var user = new User { Email = dto.Email };
+            // Parooli rÃ¤si genereerimine
             user.PasswordHash = _hasher.HashPassword(user, dto.Password);
             _context.Users.Add(user);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync();   // salvestame kasutaja
             return user;
         }
 
+        // Kasutaja sisselogimine ja JWT genereerimine
         public async Task<LoginResponse> Login(LoginDto dto)
         {
+            // Otsime kasutajat e-posti jÃ¤rgi
             var user = await _context.Users
                                      .FirstOrDefaultAsync(u => u.Email == dto.Email);
+            // Kontrollime parooli Ãµigsust
             if (user == null ||
                 _hasher.VerifyHashedPassword(user, user.PasswordHash, dto.Password)
                 != PasswordVerificationResult.Success)
@@ -42,21 +48,20 @@ namespace Merestock.Server.Services
                 throw new UnauthorizedAccessException("Invalid credentials");
             }
 
-            // Áåğ¸ì ñåêğåò ïğÿìî èç êîíôèãà (ñòğîêà)
+            // VÃµtme ja allkirjastamise seadistus JWT jaoks
             var secret = _config["JWT:Secret"]
                          ?? throw new InvalidOperationException("JWT:Secret not configured");
-            // Êîíâåğòèğóåì åãî â áàéòû
-            var keyBytes = Encoding.UTF8.GetBytes(secret);
-            // Ãåíåğèğóåì ñèììåòğè÷íûé êëş÷
-            var key = new SymmetricSecurityKey(keyBytes);
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
+            // Lisame tokenile pÃµhilised claimsâ€™id
             var claims = new[]
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
                 new Claim(JwtRegisteredClaimNames.Email, user.Email)
             };
 
+            // Koostame ja allkirjastame JWT, kehtivus 7 pÃ¤eva
             var token = new JwtSecurityToken(
                 issuer: _config["JWT:Issuer"],
                 audience: _config["JWT:Audience"],
@@ -65,6 +70,7 @@ namespace Merestock.Server.Services
                 signingCredentials: creds
             );
 
+            // Tagastame JWT-stringi ja kasutaja ID
             return new LoginResponse
             {
                 Token = new JwtSecurityTokenHandler().WriteToken(token),

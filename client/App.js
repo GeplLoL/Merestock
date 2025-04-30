@@ -1,24 +1,34 @@
+// App.js
 import React from 'react';
-import { Provider as ReduxProvider } from 'react-redux';
+import { Provider } from 'react-redux';
+import { store, persistor } from './redux/store';
 import { NavigationContainer } from '@react-navigation/native';
-import { StatusBar } from 'expo-status-bar';
-import { Provider as PaperProvider } from 'react-native-paper';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-
+import { PersistGate } from 'redux-persist/integration/react';
 import AppNavigator from './navigation/AppNavigator';
-import { store } from './redux/store';
+
+const linking = {
+  prefixes: [window.location.origin],  // например http://localhost:8081
+  config: {
+    screens: {
+      Login:      'login',               // http://…/login
+      Signup:     'signup',              // http://…/signup
+      Home:       'home',                // http://…/home
+      Users:      'users',               // http://…/users
+      AddListing: 'add-listing',         // http://…/add-listing
+      Chat:       'chat/:productId/:otherUserId',
+      Profile:    'profile',
+    },
+  },
+};
 
 export default function App() {
   return (
-    <ReduxProvider store={store}>
-      <SafeAreaProvider>
-        <PaperProvider>
-          <NavigationContainer>
-            <AppNavigator />
-          </NavigationContainer>
-          <StatusBar style="auto" />
-        </PaperProvider>
-      </SafeAreaProvider>
-    </ReduxProvider>
+    <Provider store={store}>
+      <PersistGate loading={null} persistor={persistor}>
+        <NavigationContainer linking={linking}>
+          <AppNavigator />
+        </NavigationContainer>
+      </PersistGate>
+    </Provider>
   );
 }

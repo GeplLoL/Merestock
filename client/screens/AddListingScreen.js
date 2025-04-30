@@ -1,58 +1,42 @@
+// src/screens/AddListingScreen.js
 import React, { useState } from 'react';
-import { View, TextInput, Button, Image, StyleSheet, Alert } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
-import api from '../services/api';
-import { addProduct } from '../services/productService';
+import {
+  View,
+  TextInput,
+  Button,
+  Alert,
+  StyleSheet,
+  ScrollView
+} from 'react-native';
+import { createProduct } from '../services/productService';
+import { useSelector }  from 'react-redux';
 
-export default function AddListingScreen() {
-  const [title, setTitle] = useState('');
-  const [price, setPrice] = useState('');
-  const [imageUri, setImageUri] = useState(null);
-
-  const pickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 0.7,
-    });
-    if (!result.canceled) {
-      setImageUri(result.assets[0].uri);
-    }
-  };
+export default function AddListingScreen({ navigation }) {
+  const [title, setTitle]       = useState('');
+  const [price, setPrice]       = useState('');
+  const [imageUrl, setImageUrl] = useState('');
+  const user = useSelector(s => s.user.info);
 
   const handleSubmit = async () => {
-    if (!title.trim() || !price.trim() || !imageUri) {
-      Alert.alert('Ошибка', 'Пожалуйста, заполните все поля.');
+    if (!title || !price) {
+      Alert.alert('Ошибка', 'Введите заголовок и цену');
       return;
     }
-
     try {
-      const formData = new FormData();
-      formData.append('file', {
-        uri: imageUri,
-        name: 'photo.jpg',
-        type: 'image/jpeg',
+      await createProduct({
+        title,
+        price: parseFloat(price),
+        imageUrl: imageUrl || undefined,
+        userId: user.id
       });
-
-      const uploadRes = await api.post('/product/upload-image', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      const { imageUrl } = uploadRes.data;
-
-      await addProduct({ title, price, imageUrl });
-      Alert.alert('Успех', 'Объявление добавлено!');
-      setTitle('');
-      setPrice('');
-      setImageUri(null);
-    } catch (error) {
-      console.error('Ошибка при добавлении объявления:', error);
-      Alert.alert('Ошибка', 'Не удалось добавить объявление.');
+      navigation.goBack();
+    } catch (e) {
+      Alert.alert('Ошибка', e.message);
     }
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.container}>
       <TextInput
         placeholder="Заголовок"
         style={styles.input}
@@ -60,32 +44,30 @@ export default function AddListingScreen() {
         onChangeText={setTitle}
       />
       <TextInput
-        placeholder="Цена (€)"
+        placeholder="Цена"
         style={styles.input}
         value={price}
         onChangeText={setPrice}
         keyboardType="numeric"
       />
-      <Button title="Выбрать фото" onPress={pickImage} />
-      {imageUri && <Image source={{ uri: imageUri }} style={styles.image} />}
-      <Button title="Добавить объявление" onPress={handleSubmit} />
-    </View>
+      <TextInput
+        placeholder="URL картинки (необязательно)"
+        style={styles.input}
+        value={imageUrl}
+        onChangeText={setImageUrl}
+      />
+      <Button title="Опубликовать" onPress={handleSubmit} />
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 20,
-    gap: 15,
-  },
-  input: {
-    borderBottomWidth: 1,
-    borderColor: '#ccc',
-    padding: 10,
-  },
-  image: {
-    width: '100%',
-    height: 200,
-    borderRadius: 10,
+  container: { padding:20 },
+  input:     {
+    borderWidth:1,
+    borderColor:'#ccc',
+    borderRadius:4,
+    padding:10,
+    marginBottom:15
   },
 });

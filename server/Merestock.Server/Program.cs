@@ -1,4 +1,4 @@
-using System;
+п»їusing System;
 using System.IO;
 using System.Text;
 using Microsoft.AspNetCore.Builder;
@@ -13,100 +13,104 @@ using Microsoft.Extensions.FileProviders;
 using Merestock.Server.Data;
 using Merestock.Server.Services;
 using Merestock.Server.Hubs;
+using Microsoft.OpenApi.Models;
+using Microsoft.AspNetCore.Http;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
 var env = builder.Environment;
 
-
-// 1. Добавляем DbContext для PostgreSQL
+// Lisame EF Core'i ja mГ¤Г¤rame Гјles PostgreSQL andmebaasiГјhenduse
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
 
-// 2. Конфигурация аутентификации JWT
+// Seadistame JWT-pГµhise autentimise
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        var secret = configuration["JWT:Secret"] ?? throw new InvalidOperationException("JWT Secret missing");
+        var secret = configuration["JWT:Secret"]
+                     ?? throw new InvalidOperationException("JWT Secret missing");
         var key = Encoding.UTF8.GetBytes(secret);
         options.TokenValidationParameters = new TokenValidationParameters
         {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidIssuer = configuration["JWT:Issuer"],
-            ValidAudience = configuration["JWT:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(key),
-            ClockSkew = TimeSpan.Zero
+            ValidateIssuer = true,                           // valideerime issuerвЂ™i
+            ValidateAudience = true,                         // valideerime audienceвЂ™i
+            ValidIssuer = configuration["JWT:Issuer"],       // lubatud issuer
+            ValidAudience = configuration["JWT:Audience"],   // lubatud audience
+            IssuerSigningKey = new SymmetricSecurityKey(key),// allkirjastamise vГµti
+            ClockSkew = TimeSpan.Zero                        // pole aega nihket
         };
     });
 
-// 3. Добавляем SignalR для реального времени
+// Lisame SignalR real-time funktsionaalsuse
 builder.Services.AddSignalR();
 
+// Lubame CORS-i klientrakenduse aadressilt ja lubame kГјpsised
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("ClientPolicy", policy =>
     {
         policy
-          .WithOrigins("http://localhost:8081",   // если запускаете Expo на этом порту
-                       "http://10.0.2.2:8081")    // Android AVD
+          .WithOrigins("http://localhost:8081",   // frontend arenduse aadress
+                       "http://10.0.2.2:8081")    // Android emulator
           .AllowAnyHeader()
           .AllowAnyMethod()
           .AllowCredentials();
     });
 });
 
-// 4. Регистрируем собственные сервисы
+// Registreerime meie teenused DI konteineris
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<MailService>();
 builder.Services.AddScoped<TokenService>();
 builder.Services.AddScoped<UserService>();
 
-// 5. Добавляем контроллеры и конфигурируем JSON
+// Lisame kontrollerid ja JSON-serialiseerimise NewtonSoftвЂ™iga
 builder.Services.AddControllers()
     .AddNewtonsoftJson();
 
-// 6. Swagger / OpenAPI
+// Lisame SwaggerвЂ™i API dokumentatsiooni jaoks
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
 var app = builder.Build();
 
+// Teenime staatilisi faile wwwroot kaustast
+app.UseStaticFiles();
 
-
-
-// 7. Статические файлы из wwwroot и uploads
-app.UseStaticFiles(); // по умолчанию wwwroot
-
-// Если у вас есть папка wwwroot/uploads для картинок:
+// Tagame, et wwwroot/uploads kaust eksisteerib
 var uploadsPath = Path.Combine(env.ContentRootPath, "wwwroot", "uploads");
 if (!Directory.Exists(uploadsPath))
     Directory.CreateDirectory(uploadsPath);
 
+// Teenime staatilisi faile kaustast wwwroot/uploads URL-iga /uploads
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(uploadsPath),
     RequestPath = "/uploads"
 });
 
-// 8. Включаем Swagger UI только в разработке
 if (app.Environment.IsDevelopment())
 {
+    // Swagger UI ainult arendusreЕѕiimis
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "Merestock API V1");
-        c.RoutePrefix = "swagger";  // /swagger/index.html
+        c.RoutePrefix = "swagger";
     });
 }
 
-// 9. Включаем аутентификацию и авторизацию
+// Autentimine ja autoriseerimine
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Rakendame CORS poliitika
 app.UseCors("ClientPolicy");
 
-// 10. Маршрутизация API и Hub
+// Kaardistame API kontrollerid ja SignalR hubi
 app.MapControllers();
 app.MapHub<ChatHub>("/chathub");
 
-// 11. Запуск
+// KГ¤ivitame rakenduse
 app.Run();

@@ -1,5 +1,4 @@
-// src/redux/userSlice.js
-
+// redux/userSlice.js
 import { createSlice } from '@reduxjs/toolkit';
 
 const userSlice = createSlice({
@@ -9,7 +8,6 @@ const userSlice = createSlice({
     info:  null,
   },
   reducers: {
-    // Принимаем payload = { token: string, info: object }
     setUser(state, action) {
       state.token = action.payload.token;
       state.info  = action.payload.info;
