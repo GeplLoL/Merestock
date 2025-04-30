@@ -13,7 +13,7 @@ export default function HeaderLogout({ navigation }) {
         navigation.navigate('Login');
       }}
     >
-      <Text style={styles.text}>Выйти</Text>
+      <Text style={styles.text}>Logi välja</Text>
     </TouchableOpacity>
   );
 }

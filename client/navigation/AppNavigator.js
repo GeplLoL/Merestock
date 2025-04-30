@@ -16,8 +16,16 @@ export default function AppNavigator() {
     <Stack.Navigator>
       {!token ? (
         <>
-          <Stack.Screen name="Login"  component={LoginScreen}  options={{ headerShown:false }} />
-          <Stack.Screen name="Signup" component={SignupScreen} options={{ headerShown:false }} />
+          <Stack.Screen
+            name="Login"
+            component={LoginScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Signup"
+            component={SignupScreen}
+            options={{ headerShown: false }}
+          />
         </>
       ) : (
         <>
@@ -25,7 +33,7 @@ export default function AppNavigator() {
             name="Home"
             component={HomeScreen}
             options={({ navigation }) => ({
-              title: 'Объявления',
+              title: 'Kuulutused',                // Kuulutused
               headerTitleAlign: 'center',
               headerRight: () => <HeaderLogout navigation={navigation} />,
             })}
@@ -34,7 +42,7 @@ export default function AppNavigator() {
             name="AddListing"
             component={AddListingScreen}
             options={({ navigation }) => ({
-              title: 'Новое объявление',
+              title: 'Uus kuulutus',             // Uus kuulutus
               headerTitleAlign: 'center',
               headerRight: () => <HeaderLogout navigation={navigation} />,
             })}

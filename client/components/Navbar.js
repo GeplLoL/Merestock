@@ -11,6 +11,7 @@ export default function Navbar() {
   const token      = useSelector(s => s.user.token);
   const user       = useSelector(s => s.user.info);
 
+  // Peidame nav-bari sisselogimis- ja registreerimisekraanidel
   if (route.name === 'Login' || route.name === 'Signup') {
     return null;
   }
@@ -19,9 +20,9 @@ export default function Navbar() {
     <View style={styles.container}>
       {token && user ? (
         <>
-          <Text style={styles.greeting}>Привет, {user.email}!</Text>
+          <Text style={styles.greeting}>Tere, {user.email}!</Text>
           <Button
-            title="Выйти"
+            title="Logi välja"
             onPress={() => {
               dispatch(logout());
               navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
@@ -30,8 +31,8 @@ export default function Navbar() {
         </>
       ) : (
         <>
-          <Button title="Войти" onPress={() => navigation.navigate('Login')} />
-          <Button title="Регистрация" onPress={() => navigation.navigate('Signup')} />
+          <Button title="Logi sisse" onPress={() => navigation.navigate('Login')} />
+          <Button title="Registreeru" onPress={() => navigation.navigate('Signup')} />
         </>
       )}
     </View>
