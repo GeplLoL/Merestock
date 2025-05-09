@@ -1,4 +1,3 @@
-// src/screens/LoginScreen.js
 import React, { useState } from 'react';
 import {
   View,
@@ -8,13 +7,10 @@ import {
   Alert,
   Platform,
   StyleSheet,
-  Dimensions,
 } from 'react-native';
 import { useDispatch } from 'react-redux';
 import { setUser }     from '../redux/userSlice';
 import { useNavigation } from '@react-navigation/native';
-
-const { width } = Dimensions.get('window');
 
 export default function LoginScreen() {
   const [email, setEmail]       = useState('');
@@ -22,11 +18,11 @@ export default function LoginScreen() {
   const dispatch = useDispatch();
   const navigation = useNavigation();
 
-  const showAlert = (title, msg) => {
+  const showAlert = (pealkiri, sõnum) => {
     if (Platform.OS === 'web') {
-      window.alert(`${title}\n\n${msg}`);
+      window.alert(`${pealkiri}\n\n${sõnum}`);
     } else {
-      Alert.alert(title, msg);
+      Alert.alert(pealkiri, sõnum);
     }
   };
 
@@ -36,15 +32,12 @@ export default function LoginScreen() {
       return;
     }
     try {
-      const res = await fetch(
-        'http://localhost:7023/api/User/login',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ email, password }),
-        }
-      );
+      const res = await fetch('http://localhost:7023/api/User/login', {
+        method:      'POST',
+        headers:     { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body:        JSON.stringify({ email, password }),
+      });
       const json = await res.json();
 
       const token =
@@ -86,8 +79,9 @@ export default function LoginScreen() {
           value={password}
           onChangeText={setPassword}
         />
+
         <TouchableOpacity style={styles.button} onPress={handleLogin}>
-          <Text style={styles.buttonText}>Logi sisse</Text>
+          <Text style={styles.buttonText}>Sisene</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.link}
@@ -102,64 +96,61 @@ export default function LoginScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    paddingTop: Platform.OS === 'android' ? 25 : 0,
-    backgroundColor: '#f9f9f9',
-    justifyContent: 'center',
-    paddingHorizontal: 10,
+    flex:             1,
+    paddingTop:       Platform.OS === 'android' ? 25 : 0,
+    backgroundColor:  '#f9f9f9',
+    justifyContent:   'center',
+    alignItems:       'center',
   },
   card: {
-    backgroundColor: '#fff',
-    width: width - 20,
-    alignSelf: 'center',
-    padding: 20,
-    borderRadius: 12,
+    width:            '80%',     // nüüd vaid 80% ekraani laiuseks
+    backgroundColor:  '#fff',
+    padding:          20,
+    borderRadius:     12,
     ...Platform.select({
       ios: {
-        shadowColor: '#000',
+        shadowColor:   '#000',
         shadowOpacity: 0.1,
-        shadowRadius: 6,
-        shadowOffset: { width: 0, height: 3 },
+        shadowRadius:  6,
+        shadowOffset:  { width: 0, height: 3 },
       },
-      android: {
-        elevation: 3,
-      },
+      android: { elevation: 3 },
     }),
   },
   title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#333',
-    textAlign: 'center',
+    fontSize:    24,
+    fontWeight:  '700',
+    color:       '#333',
+    textAlign:   'center',
     marginBottom: 20,
   },
   input: {
-    height: 45,
-    backgroundColor: '#eee',
-    borderRadius: 22,
-    paddingHorizontal: 15,
-    fontSize: 16,
-    color: '#333',
-    marginBottom: 15,
+    height:           45,
+    backgroundColor:  '#eee',
+    borderRadius:     22,
+    paddingHorizontal:15,
+    fontSize:         16,
+    color:            '#333',
+    marginBottom:     15,
   },
   button: {
     backgroundColor: '#3498db',
-    borderRadius: 8,
+    borderRadius:    8,
     paddingVertical: 12,
-    alignItems: 'center',
-    marginTop: 5,
+    alignItems:      'center',
+    marginTop:       5,
   },
   buttonText: {
-    fontSize: 16,
+    fontSize:   16,
     fontWeight: '600',
-    color: '#fff',
+    color:      '#fff',
   },
   link: {
-    marginTop: 15,
-    alignItems: 'center',
+    marginTop:   15,
+    alignItems:  'center',
   },
   linkText: {
     fontSize: 14,
-    color: '#007AFF',
+    color:    '#007AFF',
   },
 });

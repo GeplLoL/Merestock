@@ -1,76 +1,154 @@
-
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
-  View, Text, TextInput, Button, StyleSheet, Alert, TouchableOpacity
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Alert,
+  Platform,
+  StyleSheet,
 } from 'react-native';
-import { useDispatch } from 'react-redux';
-import authService from '../services/authService';
-import { setUser } from '../redux/userSlice';
+import { useNavigation } from '@react-navigation/native';
 
-export default function SignupScreen({ navigation, route }) {
-  useEffect(() => console.log('📝 mounted', route.name), []);
-
+export default function SignupScreen() {
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
-  const [confirm, setConfirm]   = useState('');
-  const dispatch = useDispatch();
+  const navigation = useNavigation();
 
-  const handleRegister = async () => {
-    if (!email || !password || !confirm) {
-      return Alert.alert('Ошибка', 'Заполните все поля');
+  const showAlert = (pealkiri, sõnum) => {
+    if (Platform.OS === 'web') {
+      window.alert(`${pealkiri}\n\n${sõnum}`);
+    } else {
+      Alert.alert(pealkiri, sõnum);
     }
-    if (password !== confirm) {
-      return Alert.alert('Ошибка', 'Пароли не совпадают');
+  };
+
+  const handleSignup = async () => {
+    if (!email || !password) {
+      showAlert('Viga', 'Sisesta e-post ja parool');
+      return;
     }
     try {
-      const data = await authService.register(email, password);
-      if (!data.token) {
-        return Alert.alert('Ошибка', data.message || 'Не удалось зарегистрироваться');
+      const res = await fetch('http://localhost:7023/api/User/register', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ email, password }),
+      });
+      const json = await res.json();
+      if (res.ok) {
+        showAlert('Success', 'Registreerumine edukas');
+        navigation.navigate('Login');
+      } else {
+        showAlert('Registreerimise viga', json.message || 'Proovi uuesti');
       }
-      dispatch(setUser({ token: data.token, info: data }));
-    } catch (err) {
-      console.error('Register error', err);
-      Alert.alert('Ошибка регистрации', err.message || 'Попробуйте ещё раз');
+    } catch (e) {
+      console.error(e);
+      showAlert('Võrgu viga', 'Serveriga ühendus ebaõnnestus');
     }
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>[SignupScreen]</Text>
-      <TextInput
-        placeholder="Email"
-        style={styles.input}
-        value={email} onChangeText={setEmail}
-        autoCapitalize="none" keyboardType="email-address"
-      />
-      <TextInput
-        placeholder="Пароль"
-        style={styles.input}
-        value={password} onChangeText={setPassword}
-        secureTextEntry
-      />
-      <TextInput
-        placeholder="Повторите пароль"
-        style={styles.input}
-        value={confirm} onChangeText={setConfirm}
-        secureTextEntry
-      />
-      <Button title="Зарегистрироваться" onPress={handleRegister} />
-      <TouchableOpacity
-        onPress={() => navigation.navigate('Login')}
-        style={styles.link}
-      >
-        <Text style={styles.linkText}>Уже есть аккаунт? Войти</Text>
-      </TouchableOpacity>
+      <View style={styles.card}>
+        <Text style={styles.title}>Registreeru</Text>
+
+        <TextInput
+          placeholder="E-post"
+          placeholderTextColor="#888"
+          style={styles.input}
+          value={email}
+          onChangeText={setEmail}
+          autoCapitalize="none"
+          keyboardType="email-address"
+        />
+        <TextInput
+          placeholder="Parool"
+          placeholderTextColor="#888"
+          style={styles.input}
+          secureTextEntry
+          value={password}
+          onChangeText={setPassword}
+        />
+                <TextInput
+          placeholder="Parool"
+          placeholderTextColor="#888"
+          style={styles.input}
+          secureTextEntry
+          value={password}
+          onChangeText={setPassword}
+        />
+
+        <TouchableOpacity style={styles.button} onPress={handleSignup}>
+          <Text style={styles.buttonText}>Loo konto</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.link}
+          onPress={() => navigation.navigate('Login')}
+        >
+          <Text style={styles.linkText}>On juba konto? Sisselogimine</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container:{ flex:1, justifyContent:'center', padding:20 },
-  title:    { fontSize:24, fontWeight:'bold', marginBottom:20, textAlign:'center' },
-  input:    { borderBottomWidth:1, marginBottom:20, padding:10 },
-  link:     { marginTop:12, alignItems:'center' },
-  linkText: { color:'#0066CC' },
+  container: {
+    flex:             1,
+    paddingTop:       Platform.OS === 'android' ? 25 : 0,
+    backgroundColor:  '#f9f9f9',
+    justifyContent:   'center',
+    alignItems:       'center',
+  },
+  card: {
+    width:            '80%',
+    backgroundColor:  '#fff',
+    padding:          20,
+    borderRadius:     12,
+    ...Platform.select({
+      ios: {
+        shadowColor:   '#000',
+        shadowOpacity: 0.1,
+        shadowRadius:  6,
+        shadowOffset:  { width: 0, height: 3 },
+      },
+      android: { elevation: 3 },
+    }),
+  },
+  title: {
+    fontSize:    24,
+    fontWeight:  '700',
+    color:       '#333',
+    textAlign:   'center',
+    marginBottom: 20,
+  },
+  input: {
+    height:           45,
+    backgroundColor:  '#eee',
+    borderRadius:     22,
+    paddingHorizontal:15,
+    fontSize:         16,
+    color:            '#333',
+    marginBottom:     15,
+  },
+  button: {
+    backgroundColor: '#3498db',
+    borderRadius:    8,
+    paddingVertical: 12,
+    alignItems:      'center',
+    marginTop:       5,
+  },
+  buttonText: {
+    fontSize:   16,
+    fontWeight: '600',
+    color:      '#fff',
+  },
+  link: {
+    marginTop:   15,
+    alignItems:  'center',
+  },
+  linkText: {
+    fontSize: 14,
+    color:    '#007AFF',
+  },
 });
-
